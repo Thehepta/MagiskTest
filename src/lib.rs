@@ -112,7 +112,7 @@ pub mod MagiskLib {
                     force_normal_boot: false,
                     rootwait: false,
                     emulator: false,
-                    slot: [0; 3],
+                    slot: "".to_owned(),
                     dt_dir: [0; 64],
                     fstab_suffix: [0; 32],
                     hardware: [0; 32],
@@ -197,7 +197,7 @@ pub mod MagiskLib {
 
         pub(crate) fn exec_init(&mut self) {
             for path in self.mount_list.iter_mut().rev() {
-                umount(path.);
+                // umount(path.);
                 // let path = CString::from_string(path);
                 // if path.unmount().log().is_ok() {
                 //     debug!("Unmount [{}]", path);
