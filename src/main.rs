@@ -1,6 +1,14 @@
 #![no_main]
+
+mod init;
+mod bootconfig;
+
+mod test;
+
 use std::ffi::c_char;
-use Fuseisk::MagiskLib::MagiskInit;
+use Fuseisk::result::ResultExt;
+use crate::init::MagiskInit;
+// use Fuseisk::{ MagiskLib::MagiskInit};
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn main(
@@ -14,8 +22,6 @@ pub unsafe extern "C" fn main(
         if libc::getpid() == 1 {
             MagiskInit::new(argv).start();
         }
-        println!("Hello, world!2");
-
         return 0;
     }
 }

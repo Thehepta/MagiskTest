@@ -6,4 +6,7 @@ edition = "2021"
 [dependencies]
 libc = "0.2"
 nix = "0.28"
-
+thiserror = "1.0"
+const_format = "0.1"
+memchr = "2.7.5"
+#fuser = "0.15"
