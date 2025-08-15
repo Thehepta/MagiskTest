@@ -89,3 +89,11 @@ HOME=$PWD ./bin/launch_cvd --daemon -init_boot_image=init_boot_magisk.img
 ./magiskboot repack "$TARGET_FILE" "$OUTPUT_FILE"
 
 ```
+
+### 修补本程序到启动镜像
+
+在 build.sh脚本中，需要清楚该修补那个cuttlefish 镜像，需要清楚自己是什么架构，未来boot 的结构可能会改变，需要自己清楚
+
+
+### maigsk 镜像修补逻辑
+magisk 修补逻辑，其中有一个boot_patch.sh文件，写了magisk如何进行修补，由于有手机的启动逻辑多种多样， 修补逻辑在手机上的主要思路是让boot.img中的ramdisk 一定还会被加载运行，说白了就是修补内核参数
