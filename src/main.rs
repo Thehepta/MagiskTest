@@ -6,9 +6,9 @@ mod bootconfig;
 mod test;
 
 use std::ffi::c_char;
-use Fuseisk::result::ResultExt;
+use MinMagisk::result::ResultExt;
 use crate::init::MagiskInit;
-// use Fuseisk::{ MagiskLib::MagiskInit};
+// use MinMagisk::{ MagiskLib::MagiskInit};
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn main(

@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "Fuseisk"
+name = "MinMagisk"
 version = "0.1.0"
 dependencies = [
  "const_format",

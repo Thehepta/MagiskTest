@@ -1,5 +1,5 @@
 use std::{ffi::c_char, fs};
-use Fuseisk::{debug, info};
+use MinMagisk::{debug, info};
 
 pub struct KeyValue {
     key: String,

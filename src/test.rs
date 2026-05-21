@@ -1,10 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use std::{
-        ffi::CString,
-        fs,
-        io::{stdout, IoSlice, Write},
-    };
+    use MinMagisk::cstr::Utf8CStr;
+use std::{ffi::CString, fs, io::{stdout, IoSlice, Write}, ptr};
+    use libc::{execv, execve};
+    use MinMagisk::{info, raw_cstr};
     use crate::bootconfig::{parse_bootconfig, parse_cmdline};
     // 注意这个惯用法：在 tests 模块中，从外部作用域导入所有名字。
     use super::*;
@@ -62,4 +61,5 @@ mod tests {
             println!("{} = {}", key, value);
         }
     }
+    
 }

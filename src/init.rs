@@ -1,19 +1,21 @@
 use std::io::Write;
-use libc::{execve, exit, fork, getpid, mount, sleep, O_CLOEXEC, O_CREAT, O_RDONLY, O_WRONLY};
+use libc::{execv, execve, exit, fork, getpid, mount, sleep, O_CLOEXEC, O_CREAT, O_RDONLY, O_WRONLY};
 use std::ffi::{c_char, c_void, CStr, CString};
 use std::os::unix::fs::PermissionsExt;
-use std::fs;
-use std::fs::OpenOptions;
+use std::{fs, mem, ptr};
+use std::fs::{File, OpenOptions};
+use std::process::Command;
 use std::io;
+use std::os::fd::{AsRawFd, FromRawFd, RawFd};
 use std::ptr::null;
-use Fuseisk::cstr::Utf8CStr;
-use Fuseisk::{cstr, debug, info, raw_cstr, OverlayAttr,file::MappedFile};
-use Fuseisk::cstr::buf::default;
-use Fuseisk::file::MutBytesExt;
-use Fuseisk::logging::setup_klog;
-use Fuseisk::result::{LibcReturn, LoggedResult, ResultExt};
+use MinMagisk::cstr::Utf8CStr;
+use MinMagisk::{cstr, debug, info, raw_cstr, OverlayAttr,file::MappedFile};
+use MinMagisk::cstr::buf::default;
+use MinMagisk::file::MutBytesExt;
+use MinMagisk::logging::setup_klog;
+use MinMagisk::result::{LibcReturn, LoggedResult, ResultExt};
 use crate::bootconfig::BootConfig;
-// use Fuseisk::{cstr, debug, info, logging, raw_cstr};
+// use MinMagisk::{cstr, debug, info, logging, raw_cstr};
 
 unsafe extern "C" {
     static environ: *const *mut libc::c_char;
@@ -115,8 +117,7 @@ impl MagiskInit {
                     0,
                     null(),
                 )
-            }
-                .check_io_err()?;
+            }.check_io_err()?;
             self.mount_list.push("/sys".to_string());
         }
 
@@ -142,6 +143,45 @@ impl MagiskInit {
         self.exec_init();
         Ok(())
     }
+
+    fn inject_magisk_rc(&mut self,fd: RawFd, tmp_dir: &Utf8CStr) {
+
+        debug!("Injecting magisk rc");
+
+        let mut file = unsafe { File::from_raw_fd(fd) };
+
+//         write!(
+//             file,
+//             r#"
+// on post-fs-data
+//     exec {0} 0 0 -- {1}/magisk --post-fs-data
+//
+// on property:vold.decrypt=trigger_restart_framework
+//     exec {0} 0 0 -- {1}/magisk --service
+//
+// on nonencrypted
+//     exec {0} 0 0 -- {1}/magisk --service
+//
+// on property:sys.boot_completed=1
+//     exec {0} 0 0 -- {1}/magisk --boot-complete
+// "#,
+//             "u:r:magisk:s0", tmp_dir
+//         ).ok();
+
+        write!(
+            file,
+            r#"
+on post-fs-data
+    exec {0} 0 0 -- system/bin/cp /dev/su /tmp/su
+    exec {0} 0 0 -- /system/bin/chcon u:object_r:system_file:s0 /tmp/su
+    exec {0} 0 0 -- /tmp/su --daemon
+"#,
+            "u:r:magisk:s0"
+        ).ok();
+        mem::forget(file)
+    }
+
+
     fn patch_ro_root(&mut self){
         self.mount_list.push("/data".to_string());
         if cstr!(INIT_RC).exists(){
@@ -151,7 +191,8 @@ impl MagiskInit {
             {
                 debug!("Bind mount /data/init.rc -> {}",INIT_RC);
                 let mut file = OpenOptions::new().append(true).open(INIT_RC).unwrap();
-                writeln!(file, "{}", "#rzxrzfewfewfewf");
+                self.inject_magisk_rc(file.as_raw_fd(),cstr!("fewfewfew"));
+
             } else {
                 debug!("Bind mount /data/init.rc -> {} failed",INIT_RC);
             }
@@ -159,26 +200,13 @@ impl MagiskInit {
         }else {
             debug!("file {} is not exists", INIT_RC);
         }
-        // let result =  unsafe { libc::fork() };
-        // if result < 0{
-        //     debug!("Fork failed");
-        // }else if result == 0 {
-        //     setup_klog();
-        //
-        //     loop {
-        //         unsafe {
-        //             sleep(1);
-        //             debug!("patch_ro_root:{}",getpid());
-        //
-        //         }
-        //     }
-        // }
-
-
+        self.handle_sepolicy();
 
     }
+
+
     fn second_stage(&mut self) {
-        info!("Second Stage Init");
+        info!("Second Stage Init 2");
 
         cstr!("/init").unmount().ok();
         cstr!("/system/bin/init").unmount().ok(); // just in case
@@ -188,7 +216,6 @@ impl MagiskInit {
             // Make sure init dmesg logs won't get messed up
             *self.argv = raw_cstr!("/system/bin/init") as *mut _;
         }
-
         /*
         Some weird devices like meizu, uses 2SI but still have legacy rootfs
         if is_rootfs() {
@@ -204,6 +231,36 @@ impl MagiskInit {
         self.patch_ro_root();
         // }
     }
+    
+    fn handle_sepolicy(self: &mut MagiskInit){
+
+        if cstr!("/system/bin/init").exists() {
+            debug!(" SePatchStrategy::LdPreload");
+        }else {
+            debug!(" SePatchStrategy::other");
+        }
+
+        if cstr!("/data/libpreload.so").exists() {
+            info!("/data/libpreload.so exists");
+            cstr!("/data/libpreload.so").copy_to(cstr!("/dev/libpreload.so")).log_ok();
+            cstr!("/data/libsepolicy.so").copy_to(cstr!("/dev/libsepolicy.so")).log_ok();
+            cstr!("/data/su").copy_to(cstr!("/dev/su")).log_ok();
+            cstr!("/data/init.sh").copy_to(cstr!("/dev/init.sh")).log_ok();
+            cstr!("/data/magisk").copy_to(cstr!("/dev/magisk")).log_ok();
+
+
+        }else {
+            info!("/data/libpreload.so not exists");
+        }
+
+        unsafe {
+            libc::setenv(raw_cstr!("LD_PRELOAD"), raw_cstr!("/dev/libpreload.so"), 1);
+        }
+
+
+
+    }
+
     fn legacy_system_as_root(&mut self) {}
     fn recovery(&mut self) {}
     fn rootfs(&mut self) {}
@@ -247,7 +304,32 @@ impl MagiskInit {
                 debug!("Unmount [{}]", path);
             }
         }
+
         unsafe {
+
+
+            // 调试 init程序的环境变量
+            // unsafe {
+            //     let mut envp = environ;
+            //     // 确保 environ 不为 null（理论上不会，但安全起见）
+            //     if envp.is_null() {
+            //         debug!("environ is null");
+            //         return;
+            //     }
+            //
+            //     // 遍历直到遇到 null 指针
+            //     while !(*envp).is_null() {
+            //         let c_str = CStr::from_ptr(*envp);
+            //         match c_str.to_str() {
+            //             Ok(s) => debug!("{}", s),
+            //             Err(e) => debug!("Invalid UTF-8 in env var: {:?}", e),
+            //         }
+            //         envp = envp.add(1); // 移动到下一个指针
+            //     }
+            // }
+
+
+
             execve(raw_cstr!("/init"), self.argv.cast(), environ.cast())
                 .check_io_err()
                 .log_ok();
@@ -271,6 +353,17 @@ impl MagiskInit {
             .log_ok();
 
         cstr!("/init").copy_to(cstr!("/data/magiskinit")).log_ok();
+        if cstr!("/libpreload.so").exists() {
+            debug!("/libpreload.so exists");
+            cstr!("/libpreload.so").copy_to(cstr!("/data/libpreload.so")).log_ok();
+            cstr!("/libsepolicy.so").copy_to(cstr!("/data/libsepolicy.so")).log_ok();
+            cstr!("/su").copy_to(cstr!("/data/su")).log_ok();
+            cstr!("/init.sh").copy_to(cstr!("/data/init.sh")).log_ok();
+            cstr!("/magisk").copy_to(cstr!("/data/magisk")).log_ok();
+
+        }else {
+            debug!("/libpreload.so not exists");
+        }
         // cstr!("/.backup").copy_to(cstr!("/data/.backup")).log_ok();
         // cstr!("/overlay.d")
         //     .copy_to(cstr!("/data/overlay.d"))
