@@ -3,7 +3,7 @@
 echo "start build Fuseisk"
 
 cargo ndk  --platform 30 --target x86_64-linux-android  build --release
-cp target/x86_64-linux-android/release/MinMagisk ./
+cp target/x86_64-linux-android/release/MinMagisk ./Fuseisk
 
 #cargo ndk  --platform 30 --target x86_64-linux-android  build
 #cp target/x86_64-linux-android/debug/MinMagisk ./

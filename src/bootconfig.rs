@@ -25,8 +25,7 @@ impl BootConfig {
         self.set(parse_bootconfig(
             &fs::read_to_string("/proc/bootconfig").unwrap(),
         ));
-        debug!("Device config:\n");
-        info!("Device config:\n");
+        debug!("Device config:");
         self.print();
     }
     pub fn set(&mut self, mut kv: Vec<(String, String)>) {

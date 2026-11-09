@@ -138,7 +138,6 @@ impl MagiskInit {
             } else {
                 self.rootfs();
         }
-
         // // Finally execute the original init
         self.exec_init();
         Ok(())
@@ -191,7 +190,7 @@ on post-fs-data
             {
                 debug!("Bind mount /data/init.rc -> {}",INIT_RC);
                 let mut file = OpenOptions::new().append(true).open(INIT_RC).unwrap();
-                self.inject_magisk_rc(file.as_raw_fd(),cstr!("fewfewfew"));
+                // self.inject_magisk_rc(file.as_raw_fd(),cstr!("fewfewfew"));
 
             } else {
                 debug!("Bind mount /data/init.rc -> {} failed",INIT_RC);
@@ -246,7 +245,7 @@ on post-fs-data
             cstr!("/data/libsepolicy.so").copy_to(cstr!("/dev/libsepolicy.so")).log_ok();
             cstr!("/data/su").copy_to(cstr!("/dev/su")).log_ok();
             cstr!("/data/init.sh").copy_to(cstr!("/dev/init.sh")).log_ok();
-            cstr!("/data/magisk").copy_to(cstr!("/dev/magisk")).log_ok();
+            // cstr!("/data/magisk").copy_to(cstr!("/dev/magisk")).log_ok();
 
 
         }else {
@@ -301,7 +300,7 @@ on post-fs-data
         for path in self.mount_list.iter_mut().rev() {
             let path = Utf8CStr::from_string(path);
             if path.unmount().log().is_ok() {
-                debug!("Unmount [{}]", path);
+                info!("Unmount [{}]", path);
             }
         }
 
@@ -353,13 +352,13 @@ on post-fs-data
             .log_ok();
 
         cstr!("/init").copy_to(cstr!("/data/magiskinit")).log_ok();
-        if cstr!("/libpreload.so").exists() {
+            if cstr!("/libpreload.so").exists() {
             debug!("/libpreload.so exists");
             cstr!("/libpreload.so").copy_to(cstr!("/data/libpreload.so")).log_ok();
             cstr!("/libsepolicy.so").copy_to(cstr!("/data/libsepolicy.so")).log_ok();
             cstr!("/su").copy_to(cstr!("/data/su")).log_ok();
             cstr!("/init.sh").copy_to(cstr!("/data/init.sh")).log_ok();
-            cstr!("/magisk").copy_to(cstr!("/data/magisk")).log_ok();
+            // cstr!("/magisk").copy_to(cstr!("/data/magisk")).log_ok();
 
         }else {
             debug!("/libpreload.so not exists");
