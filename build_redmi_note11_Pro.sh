@@ -3,6 +3,13 @@
 echo "start build Fuseisk"
 
 
+cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=ninja -DCMAKE_TOOLCHAIN_FILE=~/NDK/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=23 -G Ninja -S  sepol -B sepol/cmake-build-arm64debug
+cmake --build sepol/cmake-build-arm64debug --target sepolicy
+cmake --build sepol/cmake-build-arm64debug --target preload
+
+cp sepol/cmake-build-arm64debug/libsepolicy.so ./
+cp sepol/cmake-build-arm64debug/libpreload.so  ./
+
 RUSTFLAGS='-C target-feature=+crt-static' cargo ndk  --platform 30 --target aarch64-linux-android  build --release
 cp target/aarch64-linux-android/release/MinMagisk ./Fuseisk
 

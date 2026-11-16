@@ -167,13 +167,22 @@ impl MagiskInit {
 //             "u:r:magisk:s0", tmp_dir
 //         ).ok();
 
+//         write!(
+//             file,
+//             r#"
+// on post-fs-data
+//     exec {0} 0 0 -- /system/bin/cp /dev/su /data/local/tmp/su
+//     exec {0} 0 0 -- /system/bin/chmod 777 /data/local/tmp/su
+//     exec {0} 0 0 -- /system/bin/chcon u:object_r:magisk_file:s0 /data/local/tmp/su
+//     exec {0} 0 0 -- /data/local/tmp/su --daemon
+// "#,
+//             "u:r:magisk:s0"
+//         ).ok();
         write!(
             file,
             r#"
 on post-fs-data
-    exec {0} 0 0 -- system/bin/cp /dev/su /tmp/su
-    exec {0} 0 0 -- /system/bin/chcon u:object_r:system_file:s0 /tmp/su
-    exec {0} 0 0 -- /tmp/su --daemon
+    exec {0} 0 0 -- /system/bin/sh /dev/init.sh
 "#,
             "u:r:magisk:s0"
         ).ok();
@@ -190,7 +199,7 @@ on post-fs-data
             {
                 debug!("Bind mount /data/init.rc -> {}",INIT_RC);
                 let mut file = OpenOptions::new().append(true).open(INIT_RC).unwrap();
-                // self.inject_magisk_rc(file.as_raw_fd(),cstr!("fewfewfew"));
+                self.inject_magisk_rc(file.as_raw_fd(),cstr!("fewfewfew"));
 
             } else {
                 debug!("Bind mount /data/init.rc -> {} failed",INIT_RC);
@@ -228,6 +237,20 @@ on post-fs-data
         } else {
         */
         self.patch_ro_root();
+
+        // let result =  unsafe { libc::fork() };
+        // if result < 0{
+        //     debug!("Fork failed");
+        // }else if result == 0 {
+        //     setup_klog();
+        //
+        //     loop {
+        //         unsafe {
+        //             sleep(1);
+        //             info!("patch_ro_root:{}",getpid());
+        //
+        //         }
+        //     }
         // }
     }
     
@@ -246,8 +269,6 @@ on post-fs-data
             cstr!("/data/su").copy_to(cstr!("/dev/su")).log_ok();
             cstr!("/data/init.sh").copy_to(cstr!("/dev/init.sh")).log_ok();
             // cstr!("/data/magisk").copy_to(cstr!("/dev/magisk")).log_ok();
-
-
         }else {
             info!("/data/libpreload.so not exists");
         }
@@ -255,9 +276,6 @@ on post-fs-data
         unsafe {
             libc::setenv(raw_cstr!("LD_PRELOAD"), raw_cstr!("/dev/libpreload.so"), 1);
         }
-
-
-
     }
 
     fn legacy_system_as_root(&mut self) {}
