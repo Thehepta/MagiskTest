@@ -77,25 +77,25 @@ void sepolicy::magisk_rules() {
 
 
     // Let everyone access tmpfs files (for SAR sbin overlay)
-    allow(ALL, "tmpfs", "file", ALL);
+//     allow(ALL, "tmpfs", "file", ALL);
 
     // Allow magiskinit daemon to handle mock selinuxfs
-    allow("kernel", "tmpfs", "fifo_file", "write");
+//     allow("kernel", "tmpfs", "fifo_file", "write");
 
     // For relabelling files
-    allow("rootfs", "labeledfs", "filesystem", "associate");
+//     allow("rootfs", "labeledfs", "filesystem", "associate");
 //    allow(SEPOL_FILE_TYPE, "pipefs", "filesystem", "associate");
 //    allow(SEPOL_FILE_TYPE, "devpts", "filesystem", "associate");
 
     // Let init transit to SEPOL_PROC_DOMAIN
-    allow("kernel", "kernel", "process", "setcurrent");
+//     allow("kernel", "kernel", "process", "setcurrent");
     allow("kernel", SEPOL_PROC_DOMAIN, "process", "dyntransition");
 
     // Let init run stuffs
     allow("kernel", SEPOL_PROC_DOMAIN, "fd", "use");
     allow("init", SEPOL_PROC_DOMAIN, "process", ALL);
-    allow("init", "tmpfs", "file", "getattr");
-    allow("init", "tmpfs", "file", "execute");
+//     allow("init", "tmpfs", "file", "getattr");
+//     allow("init", "tmpfs", "file", "execute");
 
     // suRights
     allow(ALL, SEPOL_PROC_DOMAIN, "process", "sigchld");
@@ -114,22 +114,27 @@ void sepolicy::magisk_rules() {
     allow(ALL, SEPOL_PROC_DOMAIN, "fifo_file", "getattr");
 
     // For mounting loop devices, mirrors, tmpfs
-    allow("kernel", ALL, "file", "read");
-    allow("kernel", ALL, "file", "write");
+//     allow("kernel", ALL, "file", "read");
+//     allow("kernel", ALL, "file", "write");
 
     // Allow all binder transactions
     allow(ALL, SEPOL_PROC_DOMAIN, "binder", ALL);
 
     // For changing file context
-    allow("rootfs", "tmpfs", "filesystem", "associate");
+//     allow("rootfs", "tmpfs", "filesystem", "associate");
 
 
     // Shut llkd up
-    dontaudit("llkd", SEPOL_PROC_DOMAIN, "process", "ptrace");
+//     dontaudit("llkd", SEPOL_PROC_DOMAIN, "process", "ptrace");
 //    dontaudit("llkd", SEPOL_CLIENT_DOMAIN, "process", "ptrace");
 
     // Allow update_engine/addon.d-v2 to run permissive on all ROMs
     permissive("update_engine");
+
+
+    dontaudit(ALL, SEPOL_PROC_DOMAIN, ALL, ALL);
+    dontaudit(ALL, SEPOL_EXEC_TYPE, ALL, ALL);
+
 
 #if 0
     // Remove all dontaudit in debug mode

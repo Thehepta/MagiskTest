@@ -182,9 +182,13 @@ impl MagiskInit {
             file,
             r#"
 on post-fs-data
-    exec {0} 0 0 -- /system/bin/sh /dev/init.sh
+    exec {0} 0 0 -- /system/bin/sh /dev/init.sh post-fs-data
+on property:sys.boot_completed=1
+    exec {0} 0 0 -- /system/bin/sh /dev/init.sh boot_completed
+on property:sys.boot_completed=1
+    exec {0} 0 0 -- /system/bin/sh /dev/init.sh nonencrypted
 "#,
-            "u:r:magisk:s0"
+            "u:r:magi1sk:s0"
         ).ok();
         mem::forget(file)
     }
