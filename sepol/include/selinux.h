@@ -24,4 +24,4 @@
 //#define SEPOL_FILE_TYPE     "magisk_file"
 //#define SEPOL_LOG_TYPE     "magisk_log_file"
 // Special file type to allow clients to transit to client domain automatically
-#define SEPOL_EXEC_TYPE     "magi1sk_exec"
+#define SEPOL_EXEC_TYPE     SEPOL_PROC_DOMAIN "_exec"

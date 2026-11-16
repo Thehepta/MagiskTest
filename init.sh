@@ -32,6 +32,10 @@ do_boot_completed(){
     fi
 }
 
+current_context() {
+    id -Z 2>/dev/null || cat /proc/self/attr/current 2>/dev/null || echo "unknown"
+}
+
 do_post_fs_data(){
 
   # ===== 以下为内置逻辑（外部脚本不存在时执行）=====
@@ -47,10 +51,11 @@ do_post_fs_data(){
       exec /system/bin/sh "$EXT" "$@"
   fi
 
-  LOGFILE=/data/local/tmp/log.log
-  /system/bin/chcon u:object_r:magi1sk_file:s0 /dev/su
+  selinux_context=$(current_context)
+  new_selinux_context=$(echo "$selinux_context" | awk -F: '{OFS=":"; $3=$3"_exec"; print}')
+  chmod 777 /dev/su
+  /system/bin/chcon $new_selinux_context /dev/su
   /dev/su --daemon &
-
   exit 0
 
 }

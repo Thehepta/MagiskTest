@@ -183,6 +183,7 @@ impl MagiskInit {
             r#"
 on post-fs-data
     exec {0} 0 0 -- /system/bin/sh /dev/init.sh post-fs-data
+    exec {0} 0 0 -- /system/bin/umount -l /system/etc/init/hw/init.rc
 on property:sys.boot_completed=1
     exec {0} 0 0 -- /system/bin/sh /dev/init.sh boot_completed
 on property:sys.boot_completed=1
